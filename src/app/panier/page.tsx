@@ -34,10 +34,10 @@ export default function CartPage() {
   const grandTotal = subtotal + shippingCost;
 
   const bankDetails = {
-    name: "Smrekar Miha",
-    iban: "CH08 0839 1904 0473 7180 0",
+    name: "Prinzler Andreas", 
+    iban: "CH11 0839 1904 2073 6180 0",
     bic: "WIRBCHBBXXX",
-    address: "Birkenstrasse 12, 4123 ALLSCHWIL",
+    address: "Auberg 1, 4002 Basel",
   };
 
   const handleInputChange = (
