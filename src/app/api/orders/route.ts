@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     // Génération d'un ID unique pour la commande (ex: ORD-1725450000000)
     const orderId = `ORD-${Date.now()}`;
 
-    await db.insert(orders).values({
+    await db.insert(orders).values({ 
       id: orderId,
       firstName: customer.firstName,
       lastName: customer.lastName,
