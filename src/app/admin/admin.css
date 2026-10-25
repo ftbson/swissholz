@@ -162,6 +162,96 @@
   color: #6b7280;
 }
 
+.admin-bank-card {
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.admin-bank-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+  color: #111827;
+  font-size: 1.2rem;
+}
+
+.admin-bank-title i {
+  color: #166534;
+}
+
+.admin-bank-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 0.85rem;
+}
+
+.admin-bank-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-bank-field label {
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.admin-bank-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.7rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #111827;
+  font: inherit;
+}
+
+.admin-bank-field input:focus {
+  border-color: #166534;
+  outline: 2px solid rgba(22, 101, 52, 0.15);
+}
+
+.admin-bank-save {
+  min-height: 42px;
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: #22c55e;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-bank-save:hover {
+  background: #16a34a;
+}
+
+.admin-bank-save:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.admin-bank-status {
+  margin: 0.85rem 0 0;
+  font-size: 0.9rem;
+}
+
+.admin-bank-status-success {
+  color: #166534;
+}
+
+.admin-bank-status-error {
+  color: #b91c1c;
+}
+
 /* --- Tableau Responsive --- */
 .admin-table-wrapper {
   overflow-x: auto;
@@ -261,4 +351,33 @@
   min-height: 80vh;
   font-weight: 600;
   color: #6b7280;
+}
+
+@media (max-width: 1000px) {
+  .admin-bank-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-bank-save {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-container {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .admin-bank-card {
+    padding: 1rem;
+  }
+
+  .admin-bank-title {
+    align-items: flex-start;
+    font-size: 1.05rem;
+  }
+
+  .admin-bank-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

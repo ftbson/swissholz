@@ -16,3 +16,12 @@ export const orders = sqliteTable("orders", {
   status: text("status").default("pending"), // pending, paid, shipped, cancelled
   createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
+
+export const bankDetails = sqliteTable("bank_details", {
+  id: text("id").primaryKey(),
+  beneficiary: text("beneficiary").notNull(),
+  iban: text("iban").notNull(),
+  bic: text("bic").notNull(),
+  address: text("address"),
+  updatedAt: text("updated_at").notNull(),
+});

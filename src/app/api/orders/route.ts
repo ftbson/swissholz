@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
     await db.insert(orders).values({ 
       id: orderId,
-      firstName: customer.firstName,
+      firstName: customer.firstName, 
       lastName: customer.lastName,
       country: customer.country,
       streetAddress: customer.streetAddress,

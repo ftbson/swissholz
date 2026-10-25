@@ -1,7 +1,7 @@
 // app/admin/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./admin.css";
 
 interface Order {
@@ -19,6 +19,20 @@ interface Order {
   createdAt: string;
 }
 
+interface BankDetails {
+  beneficiary: string;
+  iban: string;
+  bic: string;
+  address: string;
+}
+
+const emptyBankDetails: BankDetails = {
+  beneficiary: "",
+  iban: "",
+  bic: "",
+  address: "",
+};
+
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [username, setUsername] = useState("");
@@ -27,25 +41,13 @@ export default function AdminPage() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
-
-  // Vérification de la session
-  useEffect(() => {
-    checkSession();
-  }, []);
-
-  const checkSession = async () => {
-    try {
-      const res = await fetch("/api/admin/check");
-      if (res.ok) {
-        setIsAuthenticated(true);
-        loadOrders();
-      } else {
-        setIsAuthenticated(false);
-      }
-    } catch {
-      setIsAuthenticated(false);
-    }
-  };
+  const [bankDetails, setBankDetails] = useState<BankDetails>(emptyBankDetails);
+  const [loadingBankDetails, setLoadingBankDetails] = useState(true);
+  const [savingBankDetails, setSavingBankDetails] = useState(false);
+  const [bankDetailsStatus, setBankDetailsStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +63,7 @@ export default function AdminPage() {
       if (res.ok) {
         setIsAuthenticated(true);
         loadOrders();
+        loadBankDetails();
       } else {
         const data = await res.json();
         setLoginError(data.error || "Anmeldung fehlgeschlagen");
@@ -75,7 +78,7 @@ export default function AdminPage() {
     setIsAuthenticated(false);
   };
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     setLoadingOrders(true);
     try {
       const res = await fetch("/api/orders");
@@ -87,6 +90,100 @@ export default function AdminPage() {
       console.error("Fehler beim Laden der Bestellungen:", err);
     } finally {
       setLoadingOrders(false);
+    }
+  }, []);
+
+  const loadBankDetails = useCallback(async () => {
+    setLoadingBankDetails(true);
+    setBankDetailsStatus(null);
+    try {
+      const res = await fetch("/api/bank-details");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Bankdaten konnten nicht geladen werden.");
+      }
+
+      setBankDetails(
+        data.bankDetails
+          ? { ...data.bankDetails, address: data.bankDetails.address ?? "" }
+          : emptyBankDetails,
+      );
+    } catch (error) {
+      console.error("Fehler beim Laden der Bankdaten:", error);
+      setBankDetailsStatus({
+        type: "error",
+        message: "Bankverbindung konnte nicht geladen werden.",
+      });
+    } finally {
+      setLoadingBankDetails(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    fetch("/api/admin/check")
+      .then((res) => {
+        if (!isCurrent) {
+          return;
+        }
+        if (res.ok) {
+          setIsAuthenticated(true);
+          loadOrders();
+          loadBankDetails();
+        } else {
+          setIsAuthenticated(false);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setIsAuthenticated(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [loadBankDetails, loadOrders]);
+
+  const handleBankDetailsChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const { name, value } = e.target;
+    setBankDetails((previous) => ({ ...previous, [name]: value }));
+  };
+
+  const handleBankDetailsSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingBankDetails(true);
+    setBankDetailsStatus(null);
+
+    try {
+      const res = await fetch("/api/bank-details", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bankDetails),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Bankdaten konnten nicht gespeichert werden.");
+      }
+
+      setBankDetailsStatus({
+        type: "success",
+        message: "Bankverbindung erfolgreich aktualisiert.",
+      });
+    } catch (error) {
+      console.error("Fehler beim Speichern der Bankdaten:", error);
+      setBankDetailsStatus({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Bankverbindung konnte nicht gespeichert werden.",
+      });
+    } finally {
+      setSavingBankDetails(false);
     }
   };
 
@@ -162,6 +259,84 @@ export default function AdminPage() {
           <i className="fa-solid fa-right-from-bracket"></i> Abmelden
         </button>
       </div>
+
+      <section className="admin-bank-card" aria-labelledby="bank-details-heading">
+        <h2 id="bank-details-heading" className="admin-bank-title">
+          <i className="fa-solid fa-building-columns"></i> Bankverbindung konfigurieren
+        </h2>
+        <form className="admin-bank-form" onSubmit={handleBankDetailsSave}>
+          <div className="admin-bank-field">
+            <label htmlFor="bank-beneficiary">Kontoinhaber *</label>
+            <input
+              id="bank-beneficiary"
+              name="beneficiary"
+              value={bankDetails.beneficiary}
+              onChange={handleBankDetailsChange}
+              disabled={loadingBankDetails || savingBankDetails}
+              maxLength={120}
+              autoComplete="name"
+              required
+            />
+          </div>
+          <div className="admin-bank-field">
+            <label htmlFor="bank-iban">IBAN *</label>
+            <input
+              id="bank-iban"
+              name="iban"
+              value={bankDetails.iban}
+              onChange={handleBankDetailsChange}
+              disabled={loadingBankDetails || savingBankDetails}
+              maxLength={50}
+              autoComplete="off"
+              required
+            />
+          </div>
+          <div className="admin-bank-field">
+            <label htmlFor="bank-bic">SWIFT / BIC *</label>
+            <input
+              id="bank-bic"
+              name="bic"
+              value={bankDetails.bic}
+              onChange={handleBankDetailsChange}
+              disabled={loadingBankDetails || savingBankDetails}
+              maxLength={20}
+              autoComplete="off"
+              required
+            />
+          </div>
+          <div className="admin-bank-field">
+            <label htmlFor="bank-address">Bankadresse (optional)</label>
+            <input
+              id="bank-address"
+              name="address"
+              value={bankDetails.address}
+              onChange={handleBankDetailsChange}
+              disabled={loadingBankDetails || savingBankDetails}
+              maxLength={200}
+              autoComplete="street-address"
+            />
+          </div>
+          <button
+            type="submit"
+            className="admin-bank-save"
+            disabled={loadingBankDetails || savingBankDetails}
+          >
+            {loadingBankDetails
+              ? "Bankdaten werden geladen..."
+              : savingBankDetails
+                ? "Wird gespeichert..."
+                : "Bankverbindung aktualisieren"}
+          </button>
+        </form>
+        {bankDetailsStatus && (
+          <p
+            className={`admin-bank-status admin-bank-status-${bankDetailsStatus.type}`}
+            role="status"
+          >
+            {bankDetailsStatus.message}
+          </p>
+        )}
+      </section>
 
       {loadingOrders ? (
         <p className="admin-loading">Bestellungen werden geladen...</p>

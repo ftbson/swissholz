@@ -5,6 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 
+interface BankDetails {
+  beneficiary: string;
+  iban: string;
+  bic: string;
+  address: string | null;
+}
+
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, subtotal, clearCart } =
     useCart();
@@ -12,6 +19,12 @@ export default function CartPage() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [step, setStep] = useState<"form" | "bank">("form");
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [bankDetails, setBankDetails] = useState<BankDetails>({
+    beneficiary: "",
+    iban: "",
+    bic: "",
+    address: null,
+  });
   
   // États pour la soumission backend
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,13 +46,6 @@ export default function CartPage() {
   const shippingCost = subtotal > 150 || cart.length === 0 ? 0 : 15.0;
   const grandTotal = subtotal + shippingCost;
 
-  const bankDetails = {
-    name: "Prinzler Andreas", 
-    iban: "CH11 0839 1904 2073 6180 0",
-    bic: "WIRBCHBBXXX",
-    address: "Auberg 1, 4002 Basel",
-  };
-
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -57,6 +63,19 @@ export default function CartPage() {
     const orderTotal = grandTotal;
 
     try {
+      const bankResponse = await fetch("/api/bank-details");
+      const bankData = await bankResponse.json();
+      if (!bankResponse.ok) {
+        throw new Error(bankData.error || "Bankverbindung konnte nicht geladen werden.");
+      }
+      if (!bankData.bankDetails) {
+        setErrorMessage(
+          "Die Bankverbindung ist noch nicht eingerichtet. Bitte kontaktieren Sie uns.",
+        );
+        return;
+      }
+      setBankDetails(bankData.bankDetails);
+
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: {
@@ -398,12 +417,14 @@ export default function CartPage() {
                   <div className="bank-detail-item">
                     <span className="detail-label">Kontoinhaber:</span>
                     <div className="detail-value-wrap">
-                      <strong className="detail-value">{bankDetails.name}</strong>
+                      <strong className="detail-value">{bankDetails.beneficiary}</strong>
                       <button
+                        type="button"
+                        aria-label="Kontoinhaber kopieren"
                         className="copy-btn"
-                        onClick={() => handleCopy(bankDetails.name, "name")}
+                        onClick={() => handleCopy(bankDetails.beneficiary, "beneficiary")}
                       >
-                        <i className={copiedField === "name" ? "fa-solid fa-check" : "fa-regular fa-copy"}></i>
+                        <i className={copiedField === "beneficiary" ? "fa-solid fa-check" : "fa-regular fa-copy"}></i>
                       </button>
                     </div>
                   </div>
@@ -413,6 +434,8 @@ export default function CartPage() {
                     <div className="detail-value-wrap">
                       <strong className="detail-value highlight">{bankDetails.iban}</strong>
                       <button
+                        type="button"
+                        aria-label="IBAN kopieren"
                         className="copy-btn"
                         onClick={() => handleCopy(bankDetails.iban, "iban")}
                       >
@@ -426,6 +449,8 @@ export default function CartPage() {
                     <div className="detail-value-wrap">
                       <strong className="detail-value">{bankDetails.bic}</strong>
                       <button
+                        type="button"
+                        aria-label="BIC kopieren"
                         className="copy-btn"
                         onClick={() => handleCopy(bankDetails.bic, "bic")}
                       >
@@ -434,18 +459,22 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  <div className="bank-detail-item">
-                    <span className="detail-label">Adresse:</span>
-                    <div className="detail-value-wrap">
-                      <span className="detail-value">{bankDetails.address}</span>
-                      <button
-                        className="copy-btn"
-                        onClick={() => handleCopy(bankDetails.address, "address")}
-                      >
-                        <i className={copiedField === "address" ? "fa-solid fa-check" : "fa-regular fa-copy"}></i>
-                      </button>
+                  {bankDetails.address && (
+                    <div className="bank-detail-item">
+                      <span className="detail-label">Adresse:</span>
+                      <div className="detail-value-wrap">
+                        <span className="detail-value">{bankDetails.address}</span>
+                        <button
+                          type="button"
+                          aria-label="Adresse kopieren"
+                          className="copy-btn"
+                          onClick={() => handleCopy(bankDetails.address ?? "", "address")}
+                        >
+                          <i className={copiedField === "address" ? "fa-solid fa-check" : "fa-regular fa-copy"}></i>
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="modal-info-box">

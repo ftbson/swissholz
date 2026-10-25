@@ -1445,6 +1445,7 @@ a {
 .detail-value {
   color: #111827;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .detail-value.highlight {
@@ -1518,6 +1519,10 @@ a {
   .detail-value-wrap {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .bank-modal-card {
+    padding: 2.25rem 1rem 1.25rem;
   }
 }
 
