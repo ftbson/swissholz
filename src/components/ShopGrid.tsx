@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { productsData, Product } from "@/data/products";
+import { getProductSlug, productsData, Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 
 export default function ShopGrid() {
@@ -180,7 +180,11 @@ export default function ShopGrid() {
           {displayedProducts.map((product: Product) => (
             <div key={product.id} className="product-card">
               {/* Bild & Rabatt-Badge */}
-              <div className="product-image-wrap">
+              <Link
+                href={`/produkt/${getProductSlug(product)}`}
+                className="product-image-wrap"
+                aria-label={`Details für ${product.title}`}
+              >
                 <Image
                   src={product.image}
                   alt={product.title}
@@ -190,12 +194,16 @@ export default function ShopGrid() {
                 {product.discount && (
                   <span className="badge-discount">{product.discount}</span>
                 )}
-              </div>
+              </Link>
 
               {/* Produktdetails */}
               <div className="product-info">
                 <span className="product-category">{product.category}</span>
-                <h3 className="product-title">{product.title}</h3>
+                <h3 className="product-title">
+                  <Link href={`/produkt/${getProductSlug(product)}`}>
+                    {product.title}
+                  </Link>
+                </h3>
 
                 {/* Bewertungen */}
                 <div className="product-rating">
