@@ -1416,7 +1416,7 @@ a {
 .product-quantity button {
   cursor: pointer;
   font-size: 1rem;
-}
+} 
 
 .product-quantity button:hover {
   background: #f6f4ef;
